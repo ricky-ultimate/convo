@@ -11,7 +11,7 @@ import { IncomingMessage, ServerResponse } from "http"; // Import types for req 
 const prisma = new PrismaClient();
 
 // Simulate the Next.js handler with explicit types for req and res
-const requestHandler = async (req: IncomingMessage, res: ServerResponse) => {
+const requestHandler = async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
   const body = await new Promise((resolve) => {
     let data = '';
     req.on('data', (chunk: Buffer) => {  // Explicitly define chunk as Buffer
@@ -22,7 +22,9 @@ const requestHandler = async (req: IncomingMessage, res: ServerResponse) => {
     });
   });
 
-  const request = new NextRequest(req.url!, { method: req.method!, body: JSON.stringify(body) });
+  // Use a fully qualified URL
+  const absoluteUrl = `http://localhost${req.url}`;
+  const request = new NextRequest(absoluteUrl, { method: req.method!, body: JSON.stringify(body) });
   const response = await registerHandler(request);
 
   // Convert Headers to a plain object
