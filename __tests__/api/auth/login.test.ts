@@ -1,6 +1,6 @@
 import supertest from "supertest";
 import { createServer } from "http";
-import { POST as registerHandler } from "@/app/api/auth/register/route"; // Use named import for POST handler
+import { POST as loginHandler } from "@/app/api/auth/[...nextauth]/route"; // Use named import for POST handler
 import { NextRequest } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
@@ -23,7 +23,7 @@ const requestHandler = async (req: IncomingMessage, res: ServerResponse): Promis
   // Use a fully qualified URL
   const absoluteUrl = `http://localhost${req.url}`;
   const request = new NextRequest(absoluteUrl, { method: req.method!, body: JSON.stringify(body) });
-  const response = await registerHandler(request);
+  const response = await loginHandler(request);
 
   // Convert Headers to a plain object
   const headers: Record<string, string> = {};
@@ -37,43 +37,45 @@ const requestHandler = async (req: IncomingMessage, res: ServerResponse): Promis
 
 const request = supertest(createServer(requestHandler));
 
-describe("POST /api/auth/register", () => {
+describe("POST /api/auth/login", () => {
   beforeAll(async () => {
-    // Clean up the user table
+    // Clean up the user table for testing
     await prisma.user.deleteMany();
+
+    // Create a test user for login
+    const hashedPassword = await bcrypt.hash("password123", 10);
+    await prisma.user.create({
+      data: {
+        email: "testuser@example.com",
+        username: "testuser",
+        password: hashedPassword,
+      },
+    });
   });
 
   afterAll(async () => {
     await prisma.$disconnect();
   });
 
-  it("should create a new user", async () => {
-    const newUser = {
+  it("should log in with valid credentials", async () => {
+    const credentials = {
       email: "testuser@example.com",
-      username: "testuser",
       password: "password123",
     };
 
-    const response = await request.post("/api/auth/register").send(newUser);
+    const response = await request.post("/api/auth/login").send(credentials);
     expect(response.status).toBe(200);
-    expect(response.body.user.email).toBe(newUser.email);
-    expect(response.body.user.username).toBe(newUser.username);
-
-    // Check if the user is in the database
-    const dbUser = await prisma.user.findUnique({ where: { email: newUser.email } });
-    expect(dbUser).not.toBeNull();
-    expect(await bcrypt.compare(newUser.password, dbUser!.password)).toBe(true);
+    expect(response.body).toHaveProperty("token");
   });
 
-  it("should return an error if user already exists", async () => {
-    const existingUser = {
-      email: "testuser@example.com",
-      username: "testuser",
-      password: "password123",
+  it("should fail with invalid credentials", async () => {
+    const invalidCredentials = {
+      email: "wrongemail@example.com",
+      password: "wrongpassword",
     };
 
-    const response = await request.post("/api/auth/register").send(existingUser);
-    expect(response.status).toBe(400);
-    expect(response.body.error).toBe("User already exists");
+    const response = await request.post("/api/auth/login").send(invalidCredentials);
+    expect(response.status).toBe(401);
+    expect(response.body.error).toBe("Invalid credentials");
   });
 });
