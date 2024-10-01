@@ -8,4 +8,7 @@ module.exports = {
     moduleNameMapper: {
       "^@/(.*)$": "<rootDir>/src/$1",
     },
+    transformIgnorePatterns: [
+      "node_modules/(?!(next-auth|@next-auth|@auth|@prisma)/)" // Add exceptions for ES modules
+    ],
   };
