@@ -1,8 +1,7 @@
 module.exports = {
     testEnvironment: "node",
     transform: {
-      "^.+\\.(ts|tsx)$": "babel-jest", // Use babel-jest to handle TypeScript and ES modules
-      "^.+\\.(js|jsx|mjs|cjs)$": "babel-jest", // Use babel-jest for JS files
+      "^.+\\.(ts|tsx|js|jsx)$": "babel-jest", // Use babel-jest for all relevant file extensions
     },
     testPathIgnorePatterns: ["/node_modules/", "/.next/"],
     setupFilesAfterEnv: [],
@@ -10,12 +9,7 @@ module.exports = {
       "^@/(.*)$": "<rootDir>/src/$1",
     },
     transformIgnorePatterns: [
-      "/node_modules/(?!next-auth|@next-auth|@auth|@prisma)" // Transform these specific ES module dependencies
+      "/node_modules/(?!next-auth|@next-auth|@auth|@prisma|oauth4webapi)/" // Include oauth4webapi and other ES module dependencies
     ],
-    globals: {
-      "ts-jest": {
-        useESM: true, // Use ES Module support in ts-jest
-      },
-    },
-    extensionsToTreatAsEsm: [".ts", ".tsx"], // Treat these files as ES modules
+    extensionsToTreatAsEsm: [".ts", ".tsx"], // Treat these extensions as ES modules
   };
