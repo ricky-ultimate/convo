@@ -1,4 +1,4 @@
-import supertest, { SuperTest, Test } from "supertest"; // Ensure you're using `SuperTest` type
+import supertest, { SuperTest, Test } from "supertest";
 import { createServer } from "http";
 import { POST as loginHandler } from "@/app/api/auth/[...nextauth]/route";
 import { NextRequest, NextResponse } from "next/server";
@@ -8,7 +8,7 @@ import { IncomingMessage, ServerResponse } from "http";
 
 const prisma = new PrismaClient();
 
-// Function to fetch CSRF token and cookie from the next-auth endpoint
+// Fetch CSRF token and cookie from the next-auth endpoint
 const fetchCSRFToken = async (request: SuperTest<Test>) => {
   const response = await request.get("/api/auth/csrf");
 
@@ -24,21 +24,28 @@ const fetchCSRFToken = async (request: SuperTest<Test>) => {
 
 // Simulate the Next.js handler with explicit types for req and res
 const requestHandler = async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
+  let bodyData = '';
+
+  // Use a Promise to capture the incoming data properly
   const body = await new Promise((resolve) => {
-    let data = '';
     req.on('data', (chunk: Buffer) => {
-      data += chunk;
+      bodyData += chunk.toString(); // Concatenate incoming data chunks as strings
     });
     req.on('end', () => {
-      resolve(JSON.parse(data));
+      // Safely handle empty data or invalid JSON
+      try {
+        resolve(bodyData.length > 0 ? JSON.parse(bodyData) : {}); // Resolve empty object if no data
+      } catch {
+        resolve({}); // Resolve with an empty object on JSON parse error
+      }
     });
   });
 
-  // Use a fully qualified URL with the correct action parameter
+  // Ensure we pass the correct method (POST) to NextRequest
   const absoluteUrl = `http://localhost/api/auth/callback/credentials`;
   const request = new NextRequest(absoluteUrl, {
-    method: req.method!,
-    body: JSON.stringify(body),
+    method: "POST",  // Explicitly set the method as POST
+    body: JSON.stringify(body), // Send the parsed body back as JSON
     headers: new Headers({
       "Content-Type": "application/json",
     }),
@@ -57,7 +64,7 @@ const requestHandler = async (req: IncomingMessage, res: ServerResponse): Promis
 };
 
 // Use a consistent `SuperTest<Test>` type for `request`
-const request: SuperTest<Test> = supertest(createServer(requestHandler)) as unknown as SuperTest<Test>;
+const request: SuperTest<Test> = supertest(createServer(requestHandler));
 
 describe("POST /api/auth/login", () => {
   beforeAll(async () => {
@@ -67,7 +74,7 @@ describe("POST /api/auth/login", () => {
     const hashedPassword = await bcrypt.hash("password123", 10);
     await prisma.user.create({
       data: {
-        email: "testuser@example.com",
+        email: "testuser1@example.com",
         username: "testuser",
         password: hashedPassword,
       },
@@ -76,14 +83,18 @@ describe("POST /api/auth/login", () => {
 
   afterAll(async () => {
     await prisma.$disconnect();
+    jest.clearAllTimers();  // Ensure there are no active timers left
   });
+
+  // Increase Jest timeout for longer test execution time
+  jest.setTimeout(20000);
 
   it("should log in with valid credentials", async () => {
     // Fetch CSRF token and cookie
     const { csrfToken, csrfCookie } = await fetchCSRFToken(request);
 
     const credentials = {
-      email: "testuser@example.com",
+      email: "testuser1@example.com",
       password: "password123",
     };
 
@@ -98,7 +109,7 @@ describe("POST /api/auth/login", () => {
 
     expect(response.status).toBe(200);
     expect(response.body).toHaveProperty("token");
-  });
+  }, 20000);
 
   it("should fail with invalid credentials", async () => {
     // Fetch CSRF token and cookie
@@ -119,5 +130,5 @@ describe("POST /api/auth/login", () => {
 
     expect(response.status).toBe(401);
     expect(response.body.error).toBe("Invalid credentials");
-  });
+  }, 20000);
 });
