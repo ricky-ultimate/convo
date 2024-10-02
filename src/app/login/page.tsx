@@ -2,11 +2,14 @@
 
 import { signIn } from "next-auth/react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,6 +26,7 @@ export default function LoginPage() {
       // Handle error display
     } else {
       // Redirect to the chat dashboard or another protected page
+      router.push("/dashboard");
     }
   };
 
