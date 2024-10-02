@@ -45,7 +45,7 @@ export default function RegisterPage() {
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="border p-2"
+          className="border p-2 text-black"
           required
         />
         <input
@@ -53,7 +53,7 @@ export default function RegisterPage() {
           placeholder="Username"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
-          className="border p-2"
+          className="border p-2 text-black"
           required
         />
         <input
@@ -61,7 +61,7 @@ export default function RegisterPage() {
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="border p-2"
+          className="border p-2 text-black"
           required
         />
         {error && <p className="text-red-500">{error}</p>}
