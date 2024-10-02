@@ -1,10 +1,10 @@
 import supertest from "supertest";
 import { createServer } from "http";
-import { POST as loginHandler } from "@/app/api/auth/[...nextauth]/route"; // Use named import for POST handler
-import { NextRequest } from "next/server";
+import { POST as loginHandler } from "@/app/api/auth/[...nextauth]/route";
+import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
-import { IncomingMessage, ServerResponse } from "http"; // Import types for req and res
+import { IncomingMessage, ServerResponse } from "http";
 
 const prisma = new PrismaClient();
 
@@ -12,7 +12,7 @@ const prisma = new PrismaClient();
 const requestHandler = async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
   const body = await new Promise((resolve) => {
     let data = '';
-    req.on('data', (chunk: Buffer) => {  // Explicitly define chunk as Buffer
+    req.on('data', (chunk: Buffer) => {
       data += chunk;
     });
     req.on('end', () => {
@@ -20,10 +20,17 @@ const requestHandler = async (req: IncomingMessage, res: ServerResponse): Promis
     });
   });
 
-  // Use a fully qualified URL
-  const absoluteUrl = `http://localhost${req.url}`;
-  const request = new NextRequest(absoluteUrl, { method: req.method!, body: JSON.stringify(body) });
-  const response = await loginHandler(request);
+  // Use a fully qualified URL with correct action parameter
+  const absoluteUrl = `http://localhost/api/auth/callback/credentials`;
+  const request = new NextRequest(absoluteUrl, {
+    method: req.method!,
+    body: JSON.stringify(body),
+    headers: new Headers({
+      "Content-Type": "application/json",
+    }),
+  });
+
+  const response = await loginHandler(request) as NextResponse;
 
   // Convert Headers to a plain object
   const headers: Record<string, string> = {};
@@ -39,7 +46,6 @@ const request = supertest(createServer(requestHandler));
 
 describe("POST /api/auth/login", () => {
   beforeAll(async () => {
-    // Clean up the user table for testing
     await prisma.user.deleteMany();
 
     // Create a test user for login
@@ -63,7 +69,7 @@ describe("POST /api/auth/login", () => {
       password: "password123",
     };
 
-    const response = await request.post("/api/auth/login").send(credentials);
+    const response = await request.post("/api/auth/callback/credentials").send(credentials);
     expect(response.status).toBe(200);
     expect(response.body).toHaveProperty("token");
   });
@@ -74,7 +80,7 @@ describe("POST /api/auth/login", () => {
       password: "wrongpassword",
     };
 
-    const response = await request.post("/api/auth/login").send(invalidCredentials);
+    const response = await request.post("/api/auth/callback/credentials").send(invalidCredentials);
     expect(response.status).toBe(401);
     expect(response.body.error).toBe("Invalid credentials");
   });
