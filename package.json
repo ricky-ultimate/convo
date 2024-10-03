@@ -7,7 +7,7 @@
     "dev": "next dev",
     "build": "next build",
     "start:next": "next dev",
-    "start:socket": "npm start --prefix websocket-server",
+    "start:socket": "npm start --prefix src/websocket-server",
     "start": "concurrently \"npm run start:next\" \"npm run start:socket\"",
     "lint": "next lint",
     "test": "jest"
