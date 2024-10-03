@@ -2,11 +2,12 @@
   "name": "convo",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start:next": "next dev",
-    "start:socket": "ts-node src/lib/socketServer.ts",
+    "start:socket": "node --loader ts-node/esm src/lib/socketServer.ts",
     "start": "concurrently \"npm run start:next\" \"npm run start:socket\"",
     "lint": "next lint",
     "test": "jest"
