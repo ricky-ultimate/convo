@@ -1,27 +1,45 @@
 import { Server as HTTPServer } from "http";
-import { NextApiResponse, NextApiRequest } from "next";
 import { Server as SocketIOServer } from "socket.io";
 import { Socket as NetSocket } from "net";
 
 // Extend the Node.js HTTP server type to include `io`
 declare module "http" {
   interface Server {
-    io: SocketIOServer | undefined;
+    io?: SocketIOServer;
   }
 }
 
 // WebSocket server instance (Singleton)
 let io: SocketIOServer | undefined;
 
-export const initializeSocket = (req: NextApiRequest, res: NextApiResponse) => {
-  const socket = res.socket as NetSocket & { server: HTTPServer };
+export const initializeSocket = (res: any) => {
+  const isAppRouter = !("status" in res);
 
-  // Ensure socket and server exist before accessing server.io
-  if (!socket || !socket.server) {
-    throw new Error("Server or socket is not available.");
+  // Ensure res.socket is available (common between API Routes and App Router)
+  if (!res.socket) {
+    console.error("Socket is not available in this environment.");
+    if (isAppRouter) {
+      return new Response("Socket is not available", { status: 500 });
+    } else {
+      res.status(500).end("Socket is not available");
+    }
+    return;
   }
 
-  // Initialize WebSocket server only if it doesn't already exist
+  const socket = res.socket as NetSocket & { server: HTTPServer };
+
+  // Ensure server exists and is available
+  if (!socket.server) {
+    console.error("Server is not available.");
+    if (isAppRouter) {
+      return new Response("Server is not available", { status: 500 });
+    } else {
+      res.status(500).end("Server is not available");
+    }
+    return;
+  }
+
+  // Initialize Socket.IO server if it doesn't exist
   if (!socket.server.io) {
     io = new SocketIOServer(socket.server, {
       path: "/api/socket",
@@ -31,7 +49,6 @@ export const initializeSocket = (req: NextApiRequest, res: NextApiResponse) => {
       },
     });
 
-    // Setup WebSocket event listeners
     io.on("connection", (socket) => {
       console.log("New client connected:", socket.id);
 
@@ -45,7 +62,6 @@ export const initializeSocket = (req: NextApiRequest, res: NextApiResponse) => {
       socket.on("message", (messageData) => {
         const { roomId, message } = messageData;
         console.log(`Message received in room ${roomId}:`, message);
-        // Broadcast message to everyone in the room
         io?.to(roomId).emit("message", messageData);
       });
 
@@ -55,9 +71,13 @@ export const initializeSocket = (req: NextApiRequest, res: NextApiResponse) => {
       });
     });
 
-    // Attach the Socket.IO server to the HTTP server
+    // Attach the Socket.IO server to Next.js
     socket.server.io = io;
   }
 
-  res.end();
+  if (isAppRouter) {
+    return new Response("Socket initialized successfully");
+  } else {
+    res.end();
+  }
 };
