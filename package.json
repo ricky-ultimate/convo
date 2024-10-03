@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "start:next": "next dev",
+    "start:socket": "ts-node src/lib/socketServer.ts",
+    "start": "concurrently \"npm run start:next\" \"npm run start:socket\"",
     "lint": "next lint",
     "test": "jest"
   },
