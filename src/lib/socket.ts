@@ -1,5 +1,3 @@
-// src/lib/socket.ts
-
 import { Server as HTTPServer } from "http";
 import { Server as SocketIOServer } from "socket.io";
 import { Socket as NetSocket } from "net";
@@ -14,15 +12,16 @@ declare module "http" {
 // WebSocket server instance (Singleton)
 let io: SocketIOServer | undefined;
 
-// Updated function to handle serverless environment gracefully
-export const initializeSocket = (res: any) => {
-  // Check if the response object supports socket handling
-  if (!res?.socket?.server) {
+// Updated socket initialization function to only use `req`
+export const initializeSocket = (req: Request) => {
+  // Check if `req` has a socket object (only in Node.js environments)
+  const socket = (req as any)?.socket as NetSocket & { server: HTTPServer };
+
+  // Ensure server exists and is available
+  if (!socket?.server) {
     console.error("Server or socket is not available in this environment. This may indicate a serverless environment or incompatible setup.");
     return new Response("Server or socket is not available in this environment", { status: 500 });
   }
-
-  const socket = res.socket as NetSocket & { server: HTTPServer };
 
   // Initialize Socket.IO server if it doesn't exist
   if (!socket.server.io) {
