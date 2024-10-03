@@ -16,9 +16,13 @@ let io: SocketIOServer | undefined;
 export const initializeSocket = (req: NextApiRequest, res: NextApiResponse) => {
   const socket = res.socket as NetSocket & { server: HTTPServer };
 
-  // Ensure socket.server.io exists
+  // Ensure socket and server exist before accessing server.io
+  if (!socket || !socket.server) {
+    throw new Error("Server or socket is not available.");
+  }
+
+  // Initialize WebSocket server only if it doesn't already exist
   if (!socket.server.io) {
-    // Initialize Socket.IO server
     io = new SocketIOServer(socket.server, {
       path: "/api/socket",
       cors: {
@@ -51,7 +55,7 @@ export const initializeSocket = (req: NextApiRequest, res: NextApiResponse) => {
       });
     });
 
-    // Attach the Socket.IO server to Next.js
+    // Attach the Socket.IO server to the HTTP server
     socket.server.io = io;
   }
 
