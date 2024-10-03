@@ -1,3 +1,5 @@
+// src/lib/socket.ts
+
 import { Server as HTTPServer } from "http";
 import { Server as SocketIOServer } from "socket.io";
 import { Socket as NetSocket } from "net";
@@ -12,32 +14,15 @@ declare module "http" {
 // WebSocket server instance (Singleton)
 let io: SocketIOServer | undefined;
 
+// Updated function to handle serverless environment gracefully
 export const initializeSocket = (res: any) => {
-  const isAppRouter = !("status" in res);
-
-  // Ensure res.socket is available (common between API Routes and App Router)
-  if (!res.socket) {
-    console.error("Socket is not available in this environment.");
-    if (isAppRouter) {
-      return new Response("Socket is not available", { status: 500 });
-    } else {
-      res.status(500).end("Socket is not available");
-    }
-    return;
+  // Check if the response object supports socket handling
+  if (!res?.socket?.server) {
+    console.error("Server or socket is not available in this environment. This may indicate a serverless environment or incompatible setup.");
+    return new Response("Server or socket is not available in this environment", { status: 500 });
   }
 
   const socket = res.socket as NetSocket & { server: HTTPServer };
-
-  // Ensure server exists and is available
-  if (!socket.server) {
-    console.error("Server is not available.");
-    if (isAppRouter) {
-      return new Response("Server is not available", { status: 500 });
-    } else {
-      res.status(500).end("Server is not available");
-    }
-    return;
-  }
 
   // Initialize Socket.IO server if it doesn't exist
   if (!socket.server.io) {
@@ -75,9 +60,5 @@ export const initializeSocket = (res: any) => {
     socket.server.io = io;
   }
 
-  if (isAppRouter) {
-    return new Response("Socket initialized successfully");
-  } else {
-    res.end();
-  }
+  return new Response("Socket initialized successfully");
 };
