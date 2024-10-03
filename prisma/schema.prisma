@@ -1,17 +1,37 @@
-generator client {
-  provider = "prisma-client-js"
-}
-
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
+generator client {
+  provider = "prisma-client-js"
+}
+
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  username  String   @unique
+  id        Int        @id @default(autoincrement())
+  email     String     @unique
+  username  String     @unique
   password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  messages  Message[]
+  chatRooms ChatRoom[] @relation("UsersInChatRooms")
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model ChatRoom {
+  id        Int       @id @default(autoincrement())
+  name      String?   // Name for group chats, can be null for private chats
+  users     User[]    @relation("UsersInChatRooms")
+  messages  Message[]
+  createdAt DateTime  @default(now())
+}
+
+model Message {
+  id         Int      @id @default(autoincrement())
+  content    String
+  user       User     @relation(fields: [userId], references: [id])
+  userId     Int
+  chatRoom   ChatRoom @relation(fields: [chatRoomId], references: [id])
+  chatRoomId Int
+  createdAt  DateTime @default(now())
 }
