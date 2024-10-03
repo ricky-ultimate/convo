@@ -7,7 +7,7 @@ export const useSocket = (roomId: string) => {
 
   useEffect(() => {
     // Connect to the new WebSocket server running on port 4000
-    const socketInstance = io("http://localhost:4000", {
+    const socketInstance = io("https://websocket-server-vf5p.onrender.com", {
       path: "/ws", // Match the path defined in socketServer.ts
     });
 
