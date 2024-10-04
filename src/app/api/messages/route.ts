@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
   try {
     // Ensure chat room exists, or create a new one
     let room = await prisma.chatRoom.findUnique({
-      where: { name: chatRoomName },
+      where: { name: chatRoomName }, // Check by name
     });
 
     if (!room) {
@@ -26,10 +26,8 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Convert session.user.id (string) to a number
     const userId = Number(session.user.id);
 
-    // Check if userId is a valid number
     if (isNaN(userId)) {
       return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
     }
@@ -58,7 +56,10 @@ export async function GET(req: NextRequest) {
   const chatRoomName = req.nextUrl.searchParams.get("chatRoomId");
 
   if (!chatRoomName) {
-    return NextResponse.json({ error: "Missing chatRoomName" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Missing chatRoomName" },
+      { status: 400 }
+    );
   }
 
   try {

@@ -27,8 +27,8 @@ export const useSocket = (roomId: string) => {
     if (socket && session?.user) {
       socket.emit("message", {
         roomId,
-        message,
-        user: { username: session.user.username || "Anonymous" }, // Use username instead of name
+        content: message, // This is the message content
+        user: { username: session.user.username || "Anonymous" },
       });
     }
   };
