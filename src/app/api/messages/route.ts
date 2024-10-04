@@ -5,36 +5,48 @@ import { auth } from "../../../../auth";
 // POST: Create a new message
 export async function POST(req: NextRequest) {
   const session = await auth();
-  const { content, chatRoomName } = await req.json();
+  const { content, chatRoomName, user } = await req.json(); // Include `user` in the message
 
-  if (!session?.user || !content || !chatRoomName) {
+  if (!content || !chatRoomName || !user?.username) {
     return NextResponse.json(
-      { error: "All fields are required, and the user must be logged in" },
+      { error: "All fields are required (content, chatRoomName, user)" },
       { status: 400 }
     );
   }
 
   try {
-    // Use chatRoomName to find or create a chat room and use its ID
+    // Ensure chat room exists (create if not)
     let room = await prisma.chatRoom.findUnique({
       where: { name: chatRoomName },
     });
 
     if (!room) {
-      room = await prisma.chatRoom.create({ data: { name: chatRoomName } });
+      room = await prisma.chatRoom.create({
+        data: { name: chatRoomName },
+      });
     }
 
-    const userId = Number(session.user.id);
-    if (isNaN(userId)) {
-      return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
+    // Ensure user exists (use WebSocket-provided username)
+    let dbUser = await prisma.user.findUnique({
+      where: { username: user.username },
+    });
+
+    if (!dbUser) {
+      dbUser = await prisma.user.create({
+        data: {
+          username: user.username,
+          email: `${user.username}@example.com`, // Placeholder email for simplicity
+          password: "password",
+        },
+      });
     }
 
-    // Create the message using the chatRoomId (not chatRoomName)
+    // Create the message in the database
     const message = await prisma.message.create({
       data: {
         content,
-        userId,
-        chatRoomId: room.id, // Use chatRoomId instead of name
+        userId: dbUser.id,
+        chatRoomId: room.id, // Reference the correct room ID
       },
     });
 
