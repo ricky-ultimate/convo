@@ -19,7 +19,7 @@ export default function ChatRoom() {
     async function fetchMessages() {
       const res = await fetch(`/api/messages?chatRoomId=${roomId}`);
       const data = await res.json();
-      setMessages(data);
+      setMessages(Array.isArray(data) ? data : []); // Ensure data is always an array
     }
 
     fetchMessages();
@@ -36,7 +36,7 @@ export default function ChatRoom() {
     <div className="chat-container">
       <div className="message-list">
         {/* Combine past messages and real-time messages */}
-        {[...messages, ...socketMessages].map((msg, index) => (
+        {[...(messages || []), ...(socketMessages || [])].map((msg, index) => (
           <div key={index} className="message-item">
             <strong>{msg.user?.username || "Anonymous"}:</strong> {msg.content}
           </div>
