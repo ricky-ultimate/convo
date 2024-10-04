@@ -4,7 +4,7 @@ import { auth } from "../../../../auth";
 
 // POST: Create a new message
 export async function POST(req: NextRequest) {
-  const session = await auth(); // Use auth() to get the user session
+  const session = await auth();
   const { content, chatRoomName } = await req.json();
 
   if (!session?.user || !content || !chatRoomName) {
@@ -15,28 +15,24 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    // Ensure chat room exists, or create a new one
     let room = await prisma.chatRoom.findUnique({
-      where: { name: chatRoomName }, // Check by name
+      where: { name: chatRoomName },
     });
 
     if (!room) {
-      room = await prisma.chatRoom.create({
-        data: { name: chatRoomName },
-      });
+      room = await prisma.chatRoom.create({ data: { name: chatRoomName } });
     }
 
     const userId = Number(session.user.id);
-
     if (isNaN(userId)) {
       return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
     }
 
-    // Create the message and associate it with the user and room
+    // Create the message with correct content and user details
     const message = await prisma.message.create({
       data: {
-        content,
-        userId, // Store the message with the logged-in user's ID (as a number)
+        content, // Ensure content is saved correctly
+        userId,
         chatRoomName,
       },
     });
