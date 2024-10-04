@@ -1,36 +1,35 @@
 import { useEffect, useState } from "react";
 import { io, Socket } from "socket.io-client";
+import { useSession } from "next-auth/react"; // Import useSession from NextAuth
 
 export const useSocket = (roomId: string) => {
+  const { data: session } = useSession(); // Get the logged-in user's session
   const [socket, setSocket] = useState<Socket | null>(null);
   const [messages, setMessages] = useState<any[]>([]);
 
   useEffect(() => {
-    // Connect to the new WebSocket server running on port 4000
-    const socketInstance = io("http://localhost:4000", {
-      path: "/ws", // Match the path defined in socketServer.ts
-    });
+    const socketInstance = io("http://localhost:4000", { path: "/ws" });
 
     setSocket(socketInstance);
 
-    // Join the specified room
     socketInstance.emit("joinRoom", roomId);
 
-    // Listen for incoming messages
     socketInstance.on("message", (message) => {
       setMessages((prevMessages) => [...prevMessages, message]);
     });
 
-    // Cleanup when component unmounts
     return () => {
       socketInstance.disconnect();
     };
   }, [roomId]);
 
-  // Function to send a message
   const sendMessage = (message: string) => {
-    if (socket) {
-      socket.emit("message", { roomId, message });
+    if (socket && session?.user) {
+      socket.emit("message", {
+        roomId,
+        message,
+        user: { username: session.user.username || "Anonymous" }, // Use username instead of name
+      });
     }
   };
 
