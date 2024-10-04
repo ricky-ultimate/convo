@@ -1,31 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { auth } from "../../../../auth";
 
 // POST: Create a new message
 export async function POST(req: NextRequest) {
-  const { content, userId, chatRoomName } = await req.json();
+  const session = await auth(); // Use auth() to get the user session
+  const { content, chatRoomName } = await req.json();
 
-  // Validate input
-  if (!content || !userId || !chatRoomName) {
+  if (!session?.user || !content || !chatRoomName) {
     return NextResponse.json(
-      { error: "All fields are required" },
+      { error: "All fields are required, and the user must be logged in" },
       { status: 400 }
     );
   }
 
   try {
-    // Ensure user exists
-    const user = await prisma.user.findUnique({
-      where: { id: userId }
-    });
-
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    // Ensure chat room exists, if not create a new one
+    // Ensure chat room exists, or create a new one
     let room = await prisma.chatRoom.findUnique({
-      where: { name: chatRoomName }
+      where: { name: chatRoomName },
     });
 
     if (!room) {
@@ -34,11 +26,19 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Create the message
+    // Convert session.user.id (string) to a number
+    const userId = Number(session.user.id);
+
+    // Check if userId is a valid number
+    if (isNaN(userId)) {
+      return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
+    }
+
+    // Create the message and associate it with the user and room
     const message = await prisma.message.create({
       data: {
         content,
-        userId,
+        userId, // Store the message with the logged-in user's ID (as a number)
         chatRoomName,
       },
     });
@@ -62,10 +62,9 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    // Fetch messages from the chat room
     const messages = await prisma.message.findMany({
       where: { chatRoomName },
-      include: { user: true },  // Include user details
+      include: { user: true }, // Include user details
       orderBy: { createdAt: "asc" },
     });
 
