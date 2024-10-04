@@ -15,6 +15,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    // Use chatRoomName to find or create a chat room and use its ID
     let room = await prisma.chatRoom.findUnique({
       where: { name: chatRoomName },
     });
@@ -28,12 +29,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
     }
 
-    // Create the message with correct content and user details
+    // Create the message using the chatRoomId (not chatRoomName)
     const message = await prisma.message.create({
       data: {
-        content, // Ensure content is saved correctly
+        content,
         userId,
-        chatRoomName,
+        chatRoomId: room.id, // Use chatRoomId instead of name
       },
     });
 
@@ -59,8 +60,21 @@ export async function GET(req: NextRequest) {
   }
 
   try {
+    // Find the chat room by name to get its ID
+    const room = await prisma.chatRoom.findUnique({
+      where: { name: chatRoomName },
+    });
+
+    if (!room) {
+      return NextResponse.json(
+        { error: "Chat room not found" },
+        { status: 404 }
+      );
+    }
+
+    // Fetch messages using chatRoomId (not name)
     const messages = await prisma.message.findMany({
-      where: { chatRoomName },
+      where: { chatRoomId: room.id }, // Use the ID for message lookups
       include: { user: true }, // Include user details
       orderBy: { createdAt: "asc" },
     });
