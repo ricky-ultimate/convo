@@ -3,10 +3,10 @@ import { prisma } from "@/lib/prisma";
 
 // POST: Create a new message
 export async function POST(req: NextRequest) {
-  const { content, userId, chatRoomId } = await req.json();
+  const { content, userId, chatRoomName } = await req.json();
 
   // Validate input
-  if (!content || !userId || !chatRoomId) {
+  if (!content || !userId || !chatRoomName) {
     return NextResponse.json(
       { error: "All fields are required" },
       { status: 400 }
@@ -23,13 +23,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Ensure chat room exists
-    const room = await prisma.chatRoom.findUnique({
-      where: { id: chatRoomId }
+    // Ensure chat room exists, if not create a new one
+    let room = await prisma.chatRoom.findUnique({
+      where: { name: chatRoomName }
     });
 
     if (!room) {
-      return NextResponse.json({ error: "Chat room not found" }, { status: 404 });
+      room = await prisma.chatRoom.create({
+        data: { name: chatRoomName },
+      });
     }
 
     // Create the message
@@ -37,7 +39,7 @@ export async function POST(req: NextRequest) {
       data: {
         content,
         userId,
-        chatRoomId,
+        chatRoomName,
       },
     });
 
@@ -53,16 +55,16 @@ export async function POST(req: NextRequest) {
 
 // GET: Fetch messages for a specific chat room
 export async function GET(req: NextRequest) {
-  const chatRoomId = req.nextUrl.searchParams.get("chatRoomId");
+  const chatRoomName = req.nextUrl.searchParams.get("chatRoomId");
 
-  if (!chatRoomId) {
-    return NextResponse.json({ error: "Missing chatRoomId" }, { status: 400 });
+  if (!chatRoomName) {
+    return NextResponse.json({ error: "Missing chatRoomName" }, { status: 400 });
   }
 
   try {
     // Fetch messages from the chat room
     const messages = await prisma.message.findMany({
-      where: { chatRoomId: Number(chatRoomId) },
+      where: { chatRoomName },
       include: { user: true },  // Include user details
       orderBy: { createdAt: "asc" },
     });
