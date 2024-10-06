@@ -8,22 +8,24 @@ generator client {
 }
 
 model User {
-    id        Int        @id @default(autoincrement())
-    email     String     @unique
-    username  String     @unique
-    password  String
-    messages  Message[]
-    chatRooms ChatRoom[] @relation("UsersInChatRooms")
-    createdAt DateTime   @default(now())
-    updatedAt DateTime   @updatedAt
+    id          Int                  @id @default(autoincrement())
+    email       String               @unique
+    username    String               @unique
+    password    String
+    messages    Message[]
+    memberships ChatRoomMembership[]
+    chatRooms   ChatRoom[]           @relation("UsersInChatRooms")
+    createdAt   DateTime             @default(now())
+    updatedAt   DateTime             @updatedAt
 }
 
 model ChatRoom {
-    id        Int       @id @default(autoincrement()) // Use ID as the primary key
-    name      String    @unique // Keep name unique for easy lookups
-    users     User[]    @relation("UsersInChatRooms")
-    messages  Message[]
-    createdAt DateTime  @default(now())
+    id          Int                  @id @default(autoincrement()) // Use ID as the primary key
+    name        String               @unique // Keep name unique for easy lookups
+    users       User[]               @relation("UsersInChatRooms")
+    messages    Message[]
+    memberships ChatRoomMembership[]
+    createdAt   DateTime             @default(now())
 }
 
 model Message {
@@ -34,4 +36,15 @@ model Message {
     chatRoom   ChatRoom @relation(fields: [chatRoomId], references: [id]) // Use chatRoomId instead of name
     chatRoomId Int // Use an integer reference to ChatRoom ID
     createdAt  DateTime @default(now())
+}
+
+model ChatRoomMembership {
+    id         Int      @id @default(autoincrement())
+    chatRoom   ChatRoom @relation(fields: [chatRoomId], references: [id])
+    chatRoomId Int
+    user       User     @relation(fields: [userId], references: [id])
+    userId     Int
+    createdAt  DateTime @default(now())
+
+    @@unique([chatRoomId, userId]) // Ensure no duplicate memberships
 }
