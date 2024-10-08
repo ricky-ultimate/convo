@@ -17,24 +17,15 @@ export const useSocket = (roomId: string) => {
 
   useEffect(() => {
     const socketInstance = io("http://localhost:4000", { path: "/ws" });
+
     setSocket(socketInstance);
 
+    // Join room if the user is logged in and has a session
     if (session?.user) {
-      console.log("Attempting to join room with:", {
-        roomId,
-        username: session.user.username,
-        token: session.token, // Include token if available
-      });
-
-      // Pass the session token as a third parameter
-      socketInstance.emit(
-        "joinRoom",
-        roomId,
-        session.user.username,
-        session.token
-      );
+      socketInstance.emit("joinRoom", roomId, session.user.username);
     }
 
+    // Listen for incoming messages with metadata
     socketInstance.on("message", (message) => {
       setMessages((prevMessages) => [
         ...prevMessages,
@@ -42,6 +33,7 @@ export const useSocket = (roomId: string) => {
       ]);
     });
 
+    // Handle server-side errors (e.g., membership validation failures)
     socketInstance.on("error", (errorMsg) => {
       console.error("Socket error:", errorMsg);
     });
@@ -51,10 +43,7 @@ export const useSocket = (roomId: string) => {
     };
   }, [roomId, session?.user]);
 
-  const sendMessage = (
-    content: string,
-    messageType: "text" | "image" = "text"
-  ) => {
+  const sendMessage = (content: string, messageType: "text" | "image" = "text") => {
     if (socket && session?.user) {
       socket.emit("message", {
         roomId,
