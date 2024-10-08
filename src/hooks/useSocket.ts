@@ -29,7 +29,6 @@ export const useSocket = (roomId: string) => {
     socketInstance.on("message", (message) => {
       setMessages((prevMessages) => [
         ...prevMessages,
-        { ...message, timestamp: new Date().toISOString() },
       ]);
     });
 
