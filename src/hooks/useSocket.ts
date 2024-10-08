@@ -43,7 +43,10 @@ export const useSocket = (roomId: string) => {
     };
   }, [roomId, session?.user]);
 
-  const sendMessage = (content: string, messageType: "text" | "image" = "text") => {
+  const sendMessage = (
+    content: string,
+    messageType: "text" | "image" = "text"
+  ) => {
     if (socket && session?.user) {
       socket.emit("message", {
         roomId,
