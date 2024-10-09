@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import api from "@/lib/api";
 
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
@@ -15,27 +16,25 @@ export default function RegisterPage() {
     e.preventDefault();
     setError("");
 
-    // POST request to NestJS backend for registration
-    const res = await fetch("http://localhost:3000/auth/register", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+    try {
+      // POST request to NestJS backend for registration
+      const res = await api.post("/auth/register", {
         email,
         username,
         password,
-      }),
-    });
+      });
 
-    const data = await res.json();
-
-    if (res.ok) {
-      // Redirect to login page after successful registration
-      router.push("/login");
-    } else {
-      // Handle error
-      setError(data.error || "Registration failed");
+      // Axios automatically parses the response data
+      if (res.status === 201) {
+        // Redirect to login page after successful registration
+        router.push("/login");
+      } else {
+        // Handle error
+        setError(res.data.error || "Registration failed");
+      }
+    } catch (err: any) {
+      // Handle any error that occurs during the request
+      setError(err.response?.data?.error || "Registration failed");
     }
   };
 
