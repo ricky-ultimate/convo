@@ -16,7 +16,7 @@ export const useSocket = (roomId: string) => {
   const [messages, setMessages] = useState<Message[]>([]);
 
   useEffect(() => {
-    const socketInstance = io("http://localhost:4000", { path: "/ws" });
+    const socketInstance = io("http://localhost:3000", { path: "/ws" });
 
     setSocket(socketInstance);
 
