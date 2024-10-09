@@ -23,14 +23,13 @@ export default function ChatRoom() {
           throw new Error("No token found. Please log in.");
         }
 
-        // Use POST request with body, no query params
-        const res = await fetch(`http://localhost:3000/chat/messages`, {
-          method: "POST",
+        // Use GET request with roomId as a query parameter
+        const res = await fetch(`http://localhost:3000/chat/messages?chatRoomName=${roomId}`, {
+          method: "GET",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`, // Send the JWT token for authentication
           },
-          body: JSON.stringify({ chatRoomName: roomId }),
         });
 
         // Handle non-200 responses
@@ -41,23 +40,21 @@ export default function ChatRoom() {
         }
 
         const data = await res.json();
-        setMessages(Array.isArray(data) ? data : []);
-        setIsLoading(false);
+        setMessages(Array.isArray(data) ? data : []); // Update messages state
+        setIsLoading(false); // Set loading to false
       } catch (err) {
         if (err instanceof Error) {
-          // TypeScript knows `err` is of type `Error` here
           console.error("Error fetching messages:", err.message);
-          setError(err.message); // Display more specific error message
+          setError(err.message); // Set error message
         } else {
-          // Fallback for non-Error objects
           setError("An unexpected error occurred.");
           console.error("Unexpected error:", err);
         }
-        setIsLoading(false);
+        setIsLoading(false); // Set loading to false on error
       }
     }
-    fetchMessages();
-  }, [roomId]);
+    fetchMessages(); // Call fetch function
+  }, [roomId]); // Dependency array, re-fetch if roomId changes
 
   const handleSend = () => {
     if (message.trim()) {
@@ -66,6 +63,7 @@ export default function ChatRoom() {
     }
   };
 
+  // Display error message if exists
   if (error) return <div className="error">{error}</div>;
 
   return (
@@ -86,7 +84,7 @@ export default function ChatRoom() {
         <input
           type="text"
           value={message}
-          onChange={(e) => setMessage(e.target.value)}
+          onChange={(e) => setMessage(e.target.value)} // Update message state on input change
           placeholder="Type a message..."
         />
         <button onClick={handleSend}>Send</button>
