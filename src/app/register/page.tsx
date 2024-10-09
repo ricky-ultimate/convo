@@ -8,13 +8,15 @@ export default function RegisterPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
-    const res = await fetch("/api/auth/register", {
+    // POST request to NestJS backend for registration
+    const res = await fetch("http://localhost:3000/auth/register", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -29,10 +31,10 @@ export default function RegisterPage() {
     const data = await res.json();
 
     if (res.ok) {
-      // On success, redirect to login or dashboard
+      // Redirect to login page after successful registration
       router.push("/login");
     } else {
-      // Display error message
+      // Handle error
       setError(data.error || "Registration failed");
     }
   };
