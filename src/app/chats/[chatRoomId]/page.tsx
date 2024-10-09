@@ -12,19 +12,47 @@ export default function ChatRoom() {
   const [messages, setMessages] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
-  const { sendMessage, messages: socketMessages } = useSocket(roomId); // Pass the string to useSocket
+  const { sendMessage, messages: socketMessages } = useSocket(roomId); // WebSocket messages
 
-  // Fetch chat room message history
+  // Fetch chat room message history from NestJS backend
   useEffect(() => {
     async function fetchMessages() {
       try {
-        const res = await fetch(`/api/messages?chatRoomId=${roomId}`);
-        if (!res.ok) throw new Error("Failed to fetch messages");
+        const token = localStorage.getItem("token"); // Get JWT token from localStorage
+        if (!token) {
+          throw new Error("No token found. Please log in.");
+        }
+
+        // Use POST request with body, no query params
+        const res = await fetch(`http://localhost:3000/chat/messages`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`, // Send the JWT token for authentication
+          },
+          body: JSON.stringify({ chatRoomName: roomId }),
+        });
+
+        // Handle non-200 responses
+        if (!res.ok) {
+          const errorData = await res.json();
+          console.error("Server error:", errorData);
+          throw new Error(errorData.error || "Failed to fetch messages");
+        }
+
         const data = await res.json();
         setMessages(Array.isArray(data) ? data : []);
         setIsLoading(false);
       } catch (err) {
-        setError("Failed to load messages.");
+        if (err instanceof Error) {
+          // TypeScript knows `err` is of type `Error` here
+          console.error("Error fetching messages:", err.message);
+          setError(err.message); // Display more specific error message
+        } else {
+          // Fallback for non-Error objects
+          setError("An unexpected error occurred.");
+          console.error("Unexpected error:", err);
+        }
         setIsLoading(false);
       }
     }
@@ -33,8 +61,8 @@ export default function ChatRoom() {
 
   const handleSend = () => {
     if (message.trim()) {
-      sendMessage(message);
-      setMessage("");
+      sendMessage(message); // Send message via WebSocket
+      setMessage(""); // Clear input after sending
     }
   };
 
@@ -48,8 +76,7 @@ export default function ChatRoom() {
         ) : (
           [...(messages || []), ...(socketMessages || [])].map((msg, index) => (
             <div key={index} className="message-item">
-              <strong>{msg.user?.username || "Anonymous"}:</strong>{" "}
-              {msg.content}
+              <strong>{msg.user?.username || "Anonymous"}:</strong> {msg.content}
             </div>
           ))
         )}
