@@ -13,7 +13,6 @@ export default function ChatRoom() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Use useSocket without passing hardcoded username
   const { sendMessage, messages: socketMessages } = useSocket(roomId); // WebSocket messages
 
   // Fetch chat room message history from NestJS backend
@@ -25,7 +24,6 @@ export default function ChatRoom() {
           throw new Error("No token found. Please log in.");
         }
 
-        // Use GET request with roomId as a query parameter
         const res = await fetch(`http://localhost:3000/chat/messages?chatRoomName=${roomId}`, {
           method: "GET",
           headers: {
@@ -34,7 +32,6 @@ export default function ChatRoom() {
           },
         });
 
-        // Handle non-200 responses
         if (!res.ok) {
           const errorData = await res.json();
           console.error("Server error:", errorData);
@@ -42,23 +39,22 @@ export default function ChatRoom() {
         }
 
         const data = await res.json();
-        setMessages(Array.isArray(data) ? data : []); // Update messages state
-        setIsLoading(false); // Set loading to false
+        setMessages(Array.isArray(data) ? data : []);
+        setIsLoading(false);
       } catch (err) {
         if (err instanceof Error) {
           console.error("Error fetching messages:", err.message);
-          setError(err.message); // Set error message
+          setError(err.message);
         } else {
           setError("An unexpected error occurred.");
           console.error("Unexpected error:", err);
         }
-        setIsLoading(false); // Set loading to false on error
+        setIsLoading(false);
       }
     }
-    fetchMessages(); // Call fetch function
-  }, [roomId]); // Dependency array, re-fetch if roomId changes
+    fetchMessages();
+  }, [roomId]);
 
-  // Add event listener for 'Enter' key to send message
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && message.trim()) {
       handleSend(); // Trigger send message on Enter key press
@@ -68,13 +64,12 @@ export default function ChatRoom() {
   const handleSend = () => {
     if (message.trim()) {
       sendMessage(message); // Send message via WebSocket
-      setMessage(""); // Clear input after sending
+      setMessage("");
     } else {
       console.error("Cannot send empty message");
     }
   };
 
-  // Display error message if exists
   if (error) return <div className="error">{error}</div>;
 
   return (
@@ -95,9 +90,9 @@ export default function ChatRoom() {
         <input
           type="text"
           value={message}
-          onChange={(e) => setMessage(e.target.value)} // Update message state on input change
+          onChange={(e) => setMessage(e.target.value)}
           placeholder="Type a message..."
-          onKeyDown={handleKeyPress} // Listen for Enter key to send message
+          onKeyDown={handleKeyPress}
         />
         <button onClick={handleSend}>Send</button>
       </div>
