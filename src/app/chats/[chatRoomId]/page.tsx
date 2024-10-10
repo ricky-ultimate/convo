@@ -12,6 +12,8 @@ export default function ChatRoom() {
   const [messages, setMessages] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+
+  // Use useSocket without passing hardcoded username
   const { sendMessage, messages: socketMessages } = useSocket(roomId); // WebSocket messages
 
   // Fetch chat room message history from NestJS backend
@@ -83,7 +85,7 @@ export default function ChatRoom() {
         ) : (
           [...(messages || []), ...(socketMessages || [])].map((msg, index) => (
             <div key={index} className="message-item">
-              <strong>{msg.user?.username || "Anonymous"}:</strong> {msg.content}
+              <strong>{msg.user.username || "Anonymous"}:</strong> {msg.content}
             </div>
           ))
         )}
