@@ -56,10 +56,19 @@ export default function ChatRoom() {
     fetchMessages(); // Call fetch function
   }, [roomId]); // Dependency array, re-fetch if roomId changes
 
+  // Add event listener for 'Enter' key to send message
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && message.trim()) {
+      handleSend(); // Trigger send message on Enter key press
+    }
+  };
+
   const handleSend = () => {
     if (message.trim()) {
       sendMessage(message); // Send message via WebSocket
       setMessage(""); // Clear input after sending
+    } else {
+      console.error("Cannot send empty message");
     }
   };
 
@@ -86,6 +95,7 @@ export default function ChatRoom() {
           value={message}
           onChange={(e) => setMessage(e.target.value)} // Update message state on input change
           placeholder="Type a message..."
+          onKeyDown={handleKeyPress} // Listen for Enter key to send message
         />
         <button onClick={handleSend}>Send</button>
       </div>
