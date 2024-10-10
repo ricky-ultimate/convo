@@ -17,6 +17,7 @@
     "@prisma/client": "^5.20.0",
     "axios": "^1.7.7",
     "bcrypt": "^5.1.1",
+    "jwt-decode": "^4.0.0",
     "next": "14.2.14",
     "next-auth": "^5.0.0-beta.22",
     "prisma": "^5.20.0",
