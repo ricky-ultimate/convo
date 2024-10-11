@@ -14,8 +14,10 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
 
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+
     // POST request to the NestJS backend for login
-    const res = await fetch("http://localhost:3000/auth/login", {
+    const res = await fetch(`${apiUrl}/auth/login`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

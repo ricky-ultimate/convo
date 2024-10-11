@@ -15,8 +15,10 @@ export default function RegisterPage() {
     e.preventDefault();
     setError("");
 
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+
     // POST request to the NestJS backend for registration
-    const res = await fetch("http://localhost:3000/auth/register", {
+    const res = await fetch(`${apiUrl}/auth/register`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

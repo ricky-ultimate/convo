@@ -20,8 +20,10 @@ export const useSocket = (roomId: string) => {
       return;
     }
 
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+
     // Initialize socket connection with JWT token in headers
-    const socketInstance = io("http://localhost:3000", {
+    const socketInstance = io(apiUrl, {
       path: "/ws",
       extraHeaders: {
         Authorization: `Bearer ${token}`, // Pass the token for authentication
