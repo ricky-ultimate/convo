@@ -14,6 +14,7 @@ export default function ChatRoom() {
   const [error, setError] = useState("");
 
   const { sendMessage, messages: socketMessages } = useSocket(roomId); // WebSocket messages
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 
   // Fetch chat room message history from NestJS backend
   useEffect(() => {
@@ -25,7 +26,7 @@ export default function ChatRoom() {
         }
 
         const res = await fetch(
-          `http://localhost:3000/chat/messages?chatRoomName=${roomId}`,
+          `${apiUrl}/chat/messages?chatRoomName=${roomId}`,
           {
             method: "GET",
             headers: {
