@@ -24,13 +24,21 @@ export default function ChatRoom() {
           throw new Error("No token found. Please log in.");
         }
 
-        const res = await fetch(`http://localhost:3000/chat/messages?chatRoomName=${roomId}`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`, // Send the JWT token for authentication
-          },
-        });
+        const res = await fetch(
+          `http://localhost:3000/chat/messages?chatRoomName=${roomId}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`, // Send the JWT token for authentication
+            },
+          }
+        );
+
+        if (res.status === 401) {
+          // Handle unauthorized user
+          throw new Error("You are not a member of this room.");
+        }
 
         if (!res.ok) {
           const errorData = await res.json();
