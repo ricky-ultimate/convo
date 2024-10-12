@@ -1,58 +1,53 @@
 import { useEffect, useState } from "react";
 import { io, Socket } from "socket.io-client";
-import { useSession } from "next-auth/react";
 
 interface Message {
   id?: number;
   content: string;
   user: { username: string };
-  timestamp: string; // Include timestamp metadata
-  messageType: "text" | "image"; // Message type for scalability
+  timestamp: string;
+  messageType: "text" | "image";
 }
 
 export const useSocket = (roomId: string) => {
-  const { data: session } = useSession(); // Get the logged-in user's session
   const [socket, setSocket] = useState<Socket | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
 
   useEffect(() => {
-    const socketInstance = io("http://localhost:4000", { path: "/ws" });
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.error("No JWT token found. Please log in.");
+      return;
+    }
+
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+
+    // Initialize socket connection with JWT token in headers
+    const socketInstance = io(apiUrl, {
+      path: "/ws",
+      extraHeaders: {
+        Authorization: `Bearer ${token}`, // Pass the token for authentication
+      },
+    });
 
     setSocket(socketInstance);
 
-    // Join room if the user is logged in and has a session
-    if (session?.user) {
-      socketInstance.emit("joinRoom", roomId, session.user.username);
-    }
+    // Emit the joinRoom event without handling username on client-side
+    socketInstance.emit("joinRoom", { roomId });
 
-    // Listen for incoming messages with metadata
+    // Listen for incoming messages
     socketInstance.on("message", (message) => {
-      setMessages((prevMessages) => [
-        ...prevMessages,
-      ]);
-    });
-
-    // Handle server-side errors (e.g., membership validation failures)
-    socketInstance.on("error", (errorMsg) => {
-      console.error("Socket error:", errorMsg);
+      setMessages((prevMessages) => [...prevMessages, message]);
     });
 
     return () => {
       socketInstance.disconnect();
     };
-  }, [roomId, session?.user]);
+  }, [roomId]);
 
-  const sendMessage = (
-    content: string,
-    messageType: "text" | "image" = "text"
-  ) => {
-    if (socket && session?.user) {
-      socket.emit("message", {
-        roomId,
-        content,
-        user: { username: session.user.username || "Anonymous" },
-        messageType,
-      });
+  const sendMessage = (content: string) => {
+    if (socket) {
+      socket.emit("message", { roomId, content });
     }
   };
 
