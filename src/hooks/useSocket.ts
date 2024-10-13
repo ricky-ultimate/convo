@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { io, Socket } from "socket.io-client";
+import { useRouter } from "next/navigation";
 
 interface Message {
   id?: number;
@@ -12,11 +13,13 @@ interface Message {
 export const useSocket = (roomId: string) => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
+  const router = useRouter(); // Add router for navigation
 
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
       console.error("No JWT token found. Please log in.");
+      router.push("/login"); // Redirect to login if no token found
       return;
     }
 
@@ -32,8 +35,16 @@ export const useSocket = (roomId: string) => {
 
     setSocket(socketInstance);
 
-    // Emit the joinRoom event without handling username on client-side
     socketInstance.emit("joinRoom", { roomId });
+
+    // Handle unauthorized access due to expired or invalid token
+    socketInstance.on("connect_error", (err) => {
+      console.error("Connection error:", err.message);
+      if (err.message.includes("Unauthorized")) {
+        localStorage.removeItem("token"); // Clear invalid token
+        router.push("/login"); // Redirect to login page
+      }
+    });
 
     // Listen for incoming messages
     socketInstance.on("message", (message) => {
@@ -43,7 +54,7 @@ export const useSocket = (roomId: string) => {
     return () => {
       socketInstance.disconnect();
     };
-  }, [roomId]);
+  }, [roomId, router]);
 
   const sendMessage = (content: string) => {
     if (socket) {
