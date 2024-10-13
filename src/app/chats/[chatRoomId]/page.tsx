@@ -1,49 +1,46 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useSocket } from "@/hooks/useSocket";
 
 export default function ChatRoom() {
-  const { chatRoomId } = useParams(); // Dynamic room ID from URL
+  const { chatRoomId } = useParams();
   const roomId = Array.isArray(chatRoomId) ? chatRoomId[0] : chatRoomId;
+  const router = useRouter();
 
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const { sendMessage, messages: socketMessages } = useSocket(roomId); // WebSocket messages
+  const { sendMessage, messages: socketMessages } = useSocket(roomId);
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 
-  // Fetch chat room message history from NestJS backend
   useEffect(() => {
     async function fetchMessages() {
       try {
-        const token = localStorage.getItem("token"); // Get JWT token from localStorage
+        const token = localStorage.getItem("token");
         if (!token) {
           throw new Error("No token found. Please log in.");
         }
 
-        const res = await fetch(
-          `${apiUrl}/chat/messages?chatRoomName=${roomId}`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`, // Send the JWT token for authentication
-            },
-          }
-        );
+        const res = await fetch(`${apiUrl}/chat/messages?chatRoomName=${roomId}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
         if (res.status === 401) {
-          // Handle unauthorized user
-          throw new Error("You are not a member of this room.");
+          localStorage.removeItem("token"); // Clear invalid token
+          router.push("/login"); // Redirect to login
+          return;
         }
 
         if (!res.ok) {
           const errorData = await res.json();
-          console.error("Server error:", errorData);
           throw new Error(errorData.error || "Failed to fetch messages");
         }
 
@@ -56,23 +53,17 @@ export default function ChatRoom() {
           setError(err.message);
         } else {
           setError("An unexpected error occurred.");
-          console.error("Unexpected error:", err);
         }
         setIsLoading(false);
       }
     }
-    fetchMessages();
-  }, [roomId]);
 
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && message.trim()) {
-      handleSend(); // Trigger send message on Enter key press
-    }
-  };
+    fetchMessages();
+  }, [roomId, router]);
 
   const handleSend = () => {
     if (message.trim()) {
-      sendMessage(message); // Send message via WebSocket
+      sendMessage(message);
       setMessage("");
     } else {
       console.error("Cannot send empty message");
@@ -84,24 +75,19 @@ export default function ChatRoom() {
   return (
     <div className="chat-container">
       <div className="message-list">
-        {isLoading ? (
-          <p>Loading messages...</p>
-        ) : (
-          [...(messages || []), ...(socketMessages || [])].map((msg, index) => (
-            <div key={index} className="message-item">
-              <strong>{msg.user.username || "Anonymous"}:</strong> {msg.content}
-            </div>
-          ))
-        )}
+        {isLoading ? <p>Loading messages...</p> : [...messages, ...socketMessages].map((msg, index) => (
+          <div key={index} className="message-item">
+            <strong>{msg.user.username || "Anonymous"}:</strong> {msg.content}
+          </div>
+        ))}
       </div>
-
       <div className="message-input">
         <input
           type="text"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           placeholder="Type a message..."
-          onKeyDown={handleKeyPress}
+          onKeyDown={(e) => e.key === "Enter" && handleSend()}
         />
         <button onClick={handleSend}>Send</button>
       </div>
