@@ -77,7 +77,7 @@ export default function ChatRoom() {
       <div className="message-list">
         {isLoading ? <p>Loading messages...</p> : [...messages, ...socketMessages].map((msg, index) => (
           <div key={index} className="message-item">
-            <strong>{msg.user.username || "Anonymous"}:</strong> {msg.content}
+            <strong>{msg?.user?.username || "Anonymous"}:</strong> {msg.content}
           </div>
         ))}
       </div>
