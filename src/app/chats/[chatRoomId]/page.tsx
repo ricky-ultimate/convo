@@ -25,17 +25,20 @@ export default function ChatRoom() {
           throw new Error("No token found. Please log in.");
         }
 
-        const res = await fetch(`${apiUrl}/chat/messages?chatRoomName=${roomId}`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const res = await fetch(
+          `${apiUrl}/chat/messages?chatRoomName=${roomId}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
         if (res.status === 401) {
-          localStorage.removeItem("token"); // Clear invalid token
-          router.push("/login"); // Redirect to login
+          localStorage.removeItem("token");
+          router.push("/login");
           return;
         }
 
@@ -75,11 +78,16 @@ export default function ChatRoom() {
   return (
     <div className="chat-container">
       <div className="message-list">
-        {isLoading ? <p>Loading messages...</p> : [...messages, ...socketMessages].map((msg, index) => (
-          <div key={index} className="message-item">
-            <strong>{msg?.user?.username || "Anonymous"}:</strong> {msg.content}
-          </div>
-        ))}
+        {isLoading ? (
+          <p>Loading messages...</p>
+        ) : (
+          [...messages, ...socketMessages].map((msg, index) => (
+            <div key={index} className="message-item">
+              <strong>{msg?.user?.username || "Anonymous"}:</strong>{" "}
+              {msg.content}
+            </div>
+          ))
+        )}
       </div>
       <div className="message-input">
         <input

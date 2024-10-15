@@ -19,17 +19,16 @@ export const useSocket = (roomId: string) => {
     const token = localStorage.getItem("token");
     if (!token) {
       console.error("No JWT token found. Please log in.");
-      router.push("/login"); // Redirect to login if no token found
+      router.push("/login");
       return;
     }
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 
-    // Initialize socket connection with JWT token in headers
     const socketInstance = io(apiUrl, {
       path: "/ws",
       extraHeaders: {
-        Authorization: `Bearer ${token}`, // Pass the token for authentication
+        Authorization: `Bearer ${token}`,
       },
     });
 
@@ -37,18 +36,18 @@ export const useSocket = (roomId: string) => {
 
     socketInstance.emit("joinRoom", { roomId });
 
-    // Handle unauthorized access due to expired or invalid token
-    socketInstance.on("connect_error", (err) => {
-      console.error("Connection error:", err.message);
-      if (err.message.includes("Unauthorized")) {
-        localStorage.removeItem("token"); // Clear invalid token
-        router.push("/login"); // Redirect to login page
-      }
-    });
+    socketInstance.on("error", (errorData) => {
+      const { message, code } = errorData;
+      console.error(`Error (${code}): ${message}`);
 
-    // Listen for incoming messages
-    socketInstance.on("message", (message) => {
-      setMessages((prevMessages) => [...prevMessages, message]);
+      // Handle specific error codes
+      if (code === "UNAUTHORIZED") {
+        localStorage.removeItem("token");
+        router.push("/login");
+      } else {
+        // Display message to users in case of other errors
+        alert(message);
+      }
     });
 
     return () => {
