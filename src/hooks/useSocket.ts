@@ -25,10 +25,11 @@ export const useSocket = (roomId: string) => {
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 
+    // Initialize socket connection with JWT token in headers
     const socketInstance = io(apiUrl, {
       path: "/ws",
       extraHeaders: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${token}`, // Pass the token for authentication
       },
     });
 
@@ -36,18 +37,18 @@ export const useSocket = (roomId: string) => {
 
     socketInstance.emit("joinRoom", { roomId });
 
-    socketInstance.on("error", (errorData) => {
-      const { message, code } = errorData;
-      console.error(`Error (${code}): ${message}`);
-
-      // Handle specific error codes
-      if (code === "UNAUTHORIZED") {
+    socketInstance.on("connect_error", (err) => {
+      console.error("Connection error:", err.message);
+      if (err.message.includes("Unauthorized")) {
         localStorage.removeItem("token");
         router.push("/login");
-      } else {
-        // Display message to users in case of other errors
-        alert(message);
       }
+    });
+
+    // Listen for incoming messages and update the state
+    socketInstance.on("message", (message) => {
+      console.log('Received message:', message);
+      setMessages((prevMessages) => [...prevMessages, message]);
     });
 
     return () => {
