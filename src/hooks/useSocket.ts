@@ -19,7 +19,7 @@ export const useSocket = (roomId: string) => {
     const token = localStorage.getItem("token");
     if (!token) {
       console.error("No JWT token found. Please log in.");
-      router.push("/login");
+      router.push("/auth/login");
       return;
     }
 
@@ -41,7 +41,7 @@ export const useSocket = (roomId: string) => {
       console.error("Connection error:", err.message);
       if (err.message.includes("Unauthorized")) {
         localStorage.removeItem("token");
-        router.push("/login");
+        router.push("/auth/login");
       }
     });
 

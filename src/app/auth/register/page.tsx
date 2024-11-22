@@ -40,7 +40,7 @@ export default function RegisterPage() {
       // Store the JWT token in localStorage
       localStorage.setItem("token", data.access_token);
       // Redirect to the login page after registration
-      router.push("/login");
+      router.push("/auth/login");
     } else {
       // Handle error
       setError(data.error || "Registration failed");
