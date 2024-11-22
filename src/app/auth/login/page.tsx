@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { At, Lock } from "@phosphor-icons/react";
+import { AtSignIcon, Lock } from "lucide-react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -49,9 +49,9 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center">
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="relative">
-          <At
+          <AtSignIcon
             className="absolute left-3 top-1/2 transform -translate-y-1/2 text-violet-500"
-            size={24}
+            strokeWidth={1.25}
           />
           <Input
             name="convo-email"
@@ -68,7 +68,7 @@ export default function LoginPage() {
         <div className="relative">
           <Lock
             className="absolute left-3 top-1/2 transform -translate-y-1/2 text-violet-500"
-            size={24}
+            strokeWidth={1.25}
           />
           <Input
             name="convo-password"
