@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { ThemeProvider } from "./components/components/theme-provider";
 import "./globals.css";
 
 const geistSans = localFont({
@@ -14,16 +15,16 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
+  title: "Convo",
+  description: "Privacy is our only language.",
+  openGraph: {
+    locale: "en_US",
     title: "Convo",
+    siteName: "Convo",
     description: "Privacy is our only language.",
-    openGraph: {
-      locale: "en_US",
-      title: "Convo",
-      siteName: "Convo",
-      description: "Privacy is our only language.",
-      type: "website",
-    },
-  };
+    type: "website",
+  },
+};
 
 export default function RootLayout({
   children,
@@ -35,7 +36,14 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );
