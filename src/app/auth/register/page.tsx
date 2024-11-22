@@ -53,7 +53,7 @@ export default function RegisterPage() {
         <div className="relative">
           <AtSignIcon
             className="absolute left-3 top-1/2 transform -translate-y-1/2 text-violet-500"
-            size={24}
+            strokeWidth={1.25}
           />
           <Input
             name="convo-email"
@@ -70,7 +70,7 @@ export default function RegisterPage() {
         <div className="relative">
           <UserCircle
             className="absolute left-3 top-1/2 transform -translate-y-1/2 text-violet-500"
-            size={24}
+            strokeWidth={1.25}
           />
           <Input
             name="kaizen-username"
@@ -87,7 +87,7 @@ export default function RegisterPage() {
         <div className="relative">
           <Lock
             className="absolute left-3 top-1/2 transform -translate-y-1/2 text-violet-500"
-            size={24}
+            strokeWidth={1.25}
           />
           <Input
             name="convo-password"
