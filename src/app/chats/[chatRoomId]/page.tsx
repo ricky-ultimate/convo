@@ -38,7 +38,7 @@ export default function ChatRoom() {
 
         if (res.status === 401) {
           localStorage.removeItem("token");
-          router.push("/login");
+          router.push("/auth/login");
           return;
         }
 
