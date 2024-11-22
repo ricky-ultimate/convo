@@ -2,6 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { At, Lock } from "@phosphor-icons/react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -44,26 +48,48 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center">
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="border p-2 text-black"
-          required
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="border p-2 text-black"
-          required
-        />
+        <div className="relative">
+          <At
+            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-violet-500"
+            size={24}
+          />
+          <Input
+            name="convo-email"
+            type="email"
+            required={true}
+            placeholder="Email address"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className={cn(
+              "pl-10 py-2 border border-gray-300 focus-visible:border-violet-500 rounded-md focus:ring-2 focus-visible:ring-2 focus:ring-violet-100 focus:!outline-none focus-visible:ring-violet-100"
+            )}
+          />
+        </div>
+        <div className="relative">
+          <Lock
+            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-violet-500"
+            size={24}
+          />
+          <Input
+            name="convo-password"
+            type="password"
+            required={true}
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className={cn(
+              "pl-10 py-2 border border-gray-300 focus-visible:border-violet-500 rounded-md focus:ring-2 focus-visible:ring-2 focus:ring-violet-100 focus:!outline-none focus-visible:ring-violet-100"
+            )}
+          />
+        </div>
         {error && <p className="text-red-500">{error}</p>}
-        <button type="submit" className="bg-blue-500 text-white p-2">
+        <Button
+          name="convo-button"
+          type="submit"
+          className="bg-violet-500 font-bold text-xl mt-2 w-full hover:bg-violet-600"
+        >
           Login
-        </button>
+        </Button>
       </form>
     </div>
   );
