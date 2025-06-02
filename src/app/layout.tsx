@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ModeToggle } from "@/components/ui/theme-toggle";
 import "./globals.css";
+import { Toaster } from "@/components/ui/toaster";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -33,7 +34,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
@@ -43,8 +44,11 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-            <ModeToggle />
           {children}
+          <Toaster />
+          <div className="fixed bottom-4 right-4">
+            <ModeToggle />
+          </div>
         </ThemeProvider>
       </body>
     </html>

@@ -5,111 +5,139 @@ import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { AtSignIcon, Lock, UserCircle } from "lucide-react"
+import { AtSignIcon, Lock, UserCircle } from "lucide-react";
+import Link from "next/link";
 
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setIsLoading(true);
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 
-    // POST request to the NestJS backend for registration
-    const res = await fetch(`${apiUrl}/auth/register`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email,
-        username,
-        password,
-      }),
-    });
+      const res = await fetch(`${apiUrl}/auth/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, username, password }),
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (res.ok && data.access_token) {
-      // Store the JWT token in localStorage
+      if (!res.ok) {
+        throw new Error(data.message || "Registration failed");
+      }
+
       localStorage.setItem("token", data.access_token);
-      // Redirect to the login page after registration
-      router.push("/auth/login");
-    } else {
-      // Handle error
-      setError(data.error || "Registration failed");
+      localStorage.setItem("user", JSON.stringify(data.user));
+      router.push("/dashboard");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Registration failed");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <div className="relative">
-          <AtSignIcon
-            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-violet-500"
-            strokeWidth={1.25}
-          />
-          <Input
-            name="convo-email"
-            type="email"
-            required={true}
-            placeholder="Email address"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className={cn(
-              "pl-10 py-2 border border-gray-300 focus-visible:border-violet-500 rounded-md focus:ring-2 focus-visible:ring-2 focus:ring-violet-100 focus:!outline-none focus-visible:ring-violet-100"
-            )}
-          />
+    <div className="flex min-h-screen flex-col items-center justify-center p-4">
+      <div className="w-full max-w-md space-y-6">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold">Create an account</h1>
+          <p className="text-muted-foreground mt-2">
+            Enter your details to get started
+          </p>
         </div>
-        <div className="relative">
-          <UserCircle
-            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-violet-500"
-            strokeWidth={1.25}
-          />
-          <Input
-            name="kaizen-username"
-            type="text"
-            required={true}
-            placeholder="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            className={cn(
-              "pl-10 py-2 border border-gray-300 focus-visible:border-violet-500 rounded-md focus:ring-2 focus-visible:ring-2 focus:ring-violet-100 focus:!outline-none focus-visible:ring-violet-100"
-            )}
-          />
+
+        {error && (
+          <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium leading-none" htmlFor="email">
+              Email
+            </label>
+            <div className="relative">
+              <AtSignIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                id="email"
+                type="email"
+                placeholder="your@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="pl-10"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label
+              className="text-sm font-medium leading-none"
+              htmlFor="username"
+            >
+              Username
+            </label>
+            <div className="relative">
+              <UserCircle className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                id="username"
+                type="text"
+                placeholder="username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="pl-10"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label
+              className="text-sm font-medium leading-none"
+              htmlFor="password"
+            >
+              Password
+            </label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="pl-10"
+                required
+              />
+            </div>
+          </div>
+
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? "Creating account..." : "Create account"}
+          </Button>
+        </form>
+
+        <div className="text-center text-sm text-muted-foreground">
+          Already have an account?{" "}
+          <Link href="/auth/login" className="text-primary hover:underline">
+            Sign in
+          </Link>
         </div>
-        <div className="relative">
-          <Lock
-            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-violet-500"
-            strokeWidth={1.25}
-          />
-          <Input
-            name="convo-password"
-            type="password"
-            required={true}
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className={cn(
-              "pl-10 py-2 border border-gray-300 focus-visible:border-violet-500 rounded-md focus:ring-2 focus-visible:ring-2 focus:ring-violet-100 focus:!outline-none focus-visible:ring-violet-100"
-            )}
-          />
-        </div>
-        {error && <p className="text-red-500">{error}</p>}
-        <Button
-          name="convo-button"
-          type="submit"
-          className="bg-violet-500 font-bold text-xl mt-2 w-full hover:bg-violet-600"
-        >
-          Login
-        </Button>
-      </form>
+      </div>
     </div>
   );
 }

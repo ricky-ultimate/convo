@@ -3,33 +3,30 @@ import { io, Socket } from "socket.io-client";
 import { useRouter } from "next/navigation";
 
 interface Message {
-  id?: number;
+  id: string;
   content: string;
   user: { username: string };
-  timestamp: string;
-  messageType: "text" | "image";
+  createdAt: string;
 }
 
 export const useSocket = (roomId: string) => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
-  const router = useRouter(); // Add router for navigation
+  const router = useRouter();
 
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
-      console.error("No JWT token found. Please log in.");
       router.push("/auth/login");
       return;
     }
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 
-    // Initialize socket connection with JWT token in headers
     const socketInstance = io(apiUrl, {
       path: "/ws",
       extraHeaders: {
-        Authorization: `Bearer ${token}`, // Pass the token for authentication
+        Authorization: `Bearer ${token}`,
       },
     });
 
@@ -45,10 +42,32 @@ export const useSocket = (roomId: string) => {
       }
     });
 
-    // Listen for incoming messages and update the state
-    socketInstance.on("message", (message) => {
-      console.log('Received message:', message);
-      setMessages((prevMessages) => [...prevMessages, message]);
+    socketInstance.on("message", (message: Message) => {
+      setMessages((prev) => [...prev, message]);
+    });
+
+    socketInstance.on("userJoined", (data: { username: string }) => {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          content: `${data.username} joined the room`,
+          user: { username: "System" },
+          createdAt: new Date().toISOString(),
+        },
+      ]);
+    });
+
+    socketInstance.on("userLeft", (data: { username: string }) => {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          content: `${data.username} left the room`,
+          user: { username: "System" },
+          createdAt: new Date().toISOString(),
+        },
+      ]);
     });
 
     return () => {
